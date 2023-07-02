@@ -29,7 +29,65 @@ var supportedNetwors = &models.InlineKeyboardMarkup{
 	},
 }
 
+type ExtendedInlineKeyboardButton struct {
+	models.InlineKeyboardButton
+	ThumbURL string
+}
+
+func (e *ExtendedInlineKeyboardButton) AdditionalMethod() {
+	
+	// Add your custom logic here
+}
+
+var connectWallet = &models.InlineKeyboardMarkup{
+	InlineKeyboard: [][]models.InlineKeyboardButton{
+		{
+			{Text: "Metamask", CallbackData: "metamask"},
+			{Text: "WalletConnect", CallbackData: "wallet_connect"},
+		}, 
+		{
+			{Text: "Ledger", CallbackData: "ledger"},
+			// {Text: "Polkadot", CallbackData: "polkadot"},
+		},
+		{
+			// {Text: "Kusama", CallbackData: "kusama"},
+		},
+	},
+}
+
+
+
+// var results = []models.InlineQueryResult{
+// 	&models.InlineQueryResultArticle{ID: "1", Title: "Foo 1", InputMessageContent: &models.InputTextMessageContent{MessageText: "foo 1"}},
+// 	&models.InlineQueryResultArticle{ID: "2", Title: "Foo 2", InputMessageContent: &models.InputTextMessageContent{MessageText: "foo 2"}},
+// 	&models.InlineQueryResultArticle{ID: "3", Title: "Foo 3", InputMessageContent: &models.InputTextMessageContent{MessageText: "foo 3"}},
+// }
+
 func ProcessMessage(ctx context.Context, b *bot.Bot, update *models.Update) {
+	if update.InlineQuery == nil {
+		return
+	}
+
+	results := []models.InlineQueryResult{
+		&models.InlineQueryResultArticle{ID: "1", Title: "Become a Lido Node Operator", InputMessageContent: &models.InputTextMessageContent{
+			MessageText: "foo 1",
+			ParseMode: models.ParseModeMarkdown,
+		}},
+		&models.InlineQueryResultArticle{ID: "2", Title: "Stake with Lido", InputMessageContent: &models.InputTextMessageContent{
+			MessageText: "foo 2",
+			ParseMode: models.ParseModeMarkdown,
+		}},
+		&models.InlineQueryResultArticle{ID: "3", Title: "Claim Lido DAO tokens", InputMessageContent: &models.InputTextMessageContent{
+			MessageText: "foo 3",
+			ParseMode: models.ParseModeMarkdown,
+		}},
+	}
+
+	b.AnswerInlineQuery(ctx, &bot.AnswerInlineQueryParams{
+		InlineQueryID: update.InlineQuery.ID,
+		Results:       results,
+	})
+
 	switch update.Message.Text {
 	case "/start":
 		reply := "Welcome to"
@@ -42,6 +100,12 @@ func ProcessMessage(ctx context.Context, b *bot.Bot, update *models.Update) {
 	case "/stake":
 		reply := "Lido lets you stake tokens from many networks. Choose a network below to get started."
 		SendInlineKeyboard(ctx, b, update.Message.Chat.ID, reply, supportedNetwors)
+
+
+	case "/faq":
+		
+		// reply := "Lido lets you stake tokens from many networks. Choose a network below to get started."
+		// SendInlineQuery(ctx, b, update.InlineQuery.ID, update.InlineQuery, results)
 	
 	}
 }
@@ -53,15 +117,22 @@ func ProcessCallbackQueryMessage(ctx context.Context, b *bot.Bot, update *models
 	case "button_1":
 		reply := "Callback Query reply to 1"
 		SendCallbackQueryMessage(ctx, b, update.CallbackQuery.ID, update.CallbackQuery.Message.Chat.ID, reply )
+
 	case "button_2":
 		reply := "Callback Query reply to 2"
 		SendCallbackQueryMessage(ctx, b, update.CallbackQuery.ID, update.CallbackQuery.Message.Chat.ID, reply )
+
 	case "button_3":
 		reply := "Callback Query reply to 3"
 		SendCallbackQueryMessage(ctx, b, update.CallbackQuery.ID, update.CallbackQuery.Message.Chat.ID, reply )
+		
 	case "button_4":
 		reply := "Callback Query reply to 4"
 		SendCallbackQueryMessage(ctx, b, update.CallbackQuery.ID, update.CallbackQuery.Message.Chat.ID, reply )
+
+	case "connect_wallet":
+		reply := "*Connect wallet*"
+		SendCallbackQueryMarkUpMessage(ctx, b, update.CallbackQuery.ID, update.CallbackQuery.Message.Chat.ID, reply, connectWallet)
 	}
 }
 
@@ -119,7 +190,7 @@ func SendParsedTextMessage(ctx context.Context, b *bot.Bot, ChatID int64, text s
 	}
 }
 
-func SendCallbackQueryMessage(ctx context.Context, b *bot.Bot, queryID string, chatID int64, text string, _data ...any){
+func SendCallbackQueryMessage(ctx context.Context, b *bot.Bot, queryID string, chatID int64, text string){
 
 	callbackParams := &bot.AnswerCallbackQueryParams{
 		CallbackQueryID: queryID,
@@ -132,15 +203,27 @@ func SendCallbackQueryMessage(ctx context.Context, b *bot.Bot, queryID string, c
 		Text: text,
 	}
 
-	if len(_data) > 0 {
-		for _, value := range _data {
-			switch value {
-			case "callback_params":
+	b.AnswerCallbackQuery(ctx, callbackParams)
 
-			case "message_params":
+	_, err := b.SendMessage(ctx, messageParams)
+	if err != nil {
+		log.Panic(err)
+	}
+}
 
-			}
-		}
+func SendCallbackQueryMarkUpMessage(ctx context.Context, b *bot.Bot, queryID string, chatID int64, text string, kb *models.InlineKeyboardMarkup){
+
+	callbackParams := &bot.AnswerCallbackQueryParams{
+		CallbackQueryID: queryID,
+		ShowAlert:       false,
+	}
+
+
+	messageParams := &bot.SendMessageParams{
+		ChatID: chatID,
+		Text: text,
+		ReplyMarkup: kb,
+		ParseMode: models.ParseModeMarkdown,
 	}
 
 	b.AnswerCallbackQuery(ctx, callbackParams)
@@ -149,5 +232,20 @@ func SendCallbackQueryMessage(ctx context.Context, b *bot.Bot, queryID string, c
 	if err != nil {
 		log.Panic(err)
 	}
+}
 
+func SendInlineQuery(ctx context.Context, b *bot.Bot, queryID string, inlineQuery *models.InlineQuery, result []models.InlineQueryResult){
+	if inlineQuery == nil {
+		return
+	}
+
+	inlineQueryParams :=  &bot.AnswerInlineQueryParams{
+		InlineQueryID: queryID,
+		Results: result,
+	}
+
+	_, err := b.AnswerInlineQuery(ctx, inlineQueryParams)
+	if err != nil{
+		log.Panic(err)
+	}
 }
