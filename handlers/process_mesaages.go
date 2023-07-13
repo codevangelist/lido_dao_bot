@@ -46,7 +46,7 @@ var connectWallet = &models.InlineKeyboardMarkup{
 			{Text: "WalletConnect", CallbackData: "wallet_connect"},
 		}, 
 		{
-			{Text: "Ledger", CallbackData: "ledger"},
+			{Text: "Coinbase", CallbackData: "coinbase"},
 			// {Text: "Polkadot", CallbackData: "polkadot"},
 		},
 		{
@@ -94,7 +94,7 @@ func ProcessMessage(ctx context.Context, b *bot.Bot, update *models.Update) {
 		SendTextMessage(ctx, b, update.Message.Chat.ID, reply)
 
 	case "/help":
-		reply := "Welcome to"
+		reply := "Welcome tocf"
 		SendTextMessage(ctx, b, update.Message.Chat.ID, reply)
 
 	case "/stake":
@@ -126,16 +126,15 @@ func ProcessCallbackQueryMessage(ctx context.Context, b *bot.Bot, update *models
 		reply := "Callback Query reply to 3"
 		SendCallbackQueryMessage(ctx, b, update.CallbackQuery.ID, update.CallbackQuery.Message.Chat.ID, reply )
 		
-	case "button_4":
-		reply := "Callback Query reply to 4"
-		SendCallbackQueryMessage(ctx, b, update.CallbackQuery.ID, update.CallbackQuery.Message.Chat.ID, reply )
+	case "coinbase":
+		reply := "Callback Query reply to coin"
+		SendCallbackQueryMarkUpMessage(ctx, b, update.CallbackQuery.ID, update.CallbackQuery.Message.Chat.ID, reply, connectWallet)
 
 	case "connect_wallet":
 		reply := "*Connect wallet*"
 		SendCallbackQueryMarkUpMessage(ctx, b, update.CallbackQuery.ID, update.CallbackQuery.Message.Chat.ID, reply, connectWallet)
 	}
 }
-
 
 func SendInlineKeyboard(ctx context.Context, b *bot.Bot, ChatID int64, text string, kb *models.InlineKeyboardMarkup, ReplyToMessageID ...int) {
 
